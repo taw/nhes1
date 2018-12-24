@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+require "json"
+require_relative "../lib/database"
+
+db = Database.new
+
+output = []
+
+db.records.each do |r|
+  record = {
+    height: (r["H1BM0013"].to_f * 0.1 * 2.54).round(1), # cm
+    weight: (r["H1BM0016"].to_f * 0.1 * 0.453592).round(1), # kg
+    age: r["H1DM0006"],
+    sex: r["H1MH0009"], # 1 male, 2 female
+    race: r["H1MH0010"], # 1 white 2 black 3 other
+  }
+  output << record
+end
+
+puts JSON.pretty_generate(output)
