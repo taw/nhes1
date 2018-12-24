@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+require "csv"
+require_relative "../lib/database"
+
+db = Database.new
+
+CSV.open("data/nhes.csv", "w") do |csv|
+  csv << db.records.first.keys
+  db.records.each do |r|
+    csv << r.values
+  end
+end
