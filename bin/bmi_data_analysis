@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+
+require "statsample"
+require "pathname"
+require "json"
+require "pry"
+
+def pearson(x, y)
+  n = x.length
+
+  sumx = x.inject(0) { |r, i| r + i }
+  sumy = y.inject(0) { |r, i| r + i }
+
+  sumxSq = x.inject(0) { |r, i| r + i ** 2 }
+  sumySq = y.inject(0) { |r, i| r + i ** 2 }
+
+  prods = []; x.each_with_index { |this_x, i| prods << this_x * y[i] }
+  pSum = prods.inject(0) { |r, i| r + i }
+
+  # Calculate Pearson score
+  num = pSum - (sumx * sumy / n)
+  den = ((sumxSq - (sumx ** 2) / n) * (sumySq - (sumy ** 2) / n)) ** 0.5
+  if den == 0
+    return 0
+  end
+  r = num / den
+  return r
+end
+
+# y = A x^B
+def power_law_least_squares_fit(x, y)
+  n = x.size.to_f
+  lx = x.map { |xi| Math.log(xi) }
+  lx2 = lx.map { |lxi| lxi ** 2 }
+  ly = y.map { |yi| Math.log(yi) }
+  lxly = lx.zip(ly).map { |lxi, lyi| lxi * lyi }
+  elx = lx.sum
+  ely = ly.sum
+  elx2 = lx2.sum
+  elxly = lxly.sum
+
+  b = (n * elxly - elx * ely) / (n * elx2 - elx ** 2)
+  a = (ely - b * elx) / n
+
+  [Math.exp(a), b]
+end
+
+data = JSON.parse(Pathname("#{__dir__}/../data/bmi.json").read)
+
+1.times do
+  x = data.map { |x| x["height"] }
+  y = data.map { |x| x["weight"] }
+  p power_law_least_squares_fit(x, y)
+  (1.0..10.0).step(0.1) do |k|
+    p [k.round(2), pearson(x.map { |xi| xi ** k }, y).round(4)]
+  end
+end
